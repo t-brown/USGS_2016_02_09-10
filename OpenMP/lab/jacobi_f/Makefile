@@ -8,7 +8,7 @@ REPORT  = -qopt-report \
           -qopt-report-phase=all
 #          -qopt-report-phase=vec,loop
 FCFLAGS = -fopenmp $(REPORT) $(DEBUG) \
-          -D__BIGGEST_ALIGNMENT=64    \
+          -D__BIGGEST_ALIGNMENT__=64  \
 
 EXE  = jacobi
 SRCS = kinds.f90  \

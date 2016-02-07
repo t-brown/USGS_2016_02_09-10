@@ -24,7 +24,7 @@ program thread_num_f
         integer :: id
         integer :: n
 
-!$omp parallel default(none) private(id)
+!$omp parallel default(none) private(id,n)
         id = omp_get_thread_num()
         n = omp_get_num_threads()
         print *, 'Hello world! From thread ', id

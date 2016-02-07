@@ -9,7 +9,7 @@ DEBUG   = -g -O0
 #          -qopt-report-phase=vec,loop
 CFLAGS  = -fopenmp -std=c11 $(REPORT) $(DEBUG)
 FCFLAGS = -fopenmp $(REPORT) $(DEBUG) \
-          -D__BIGGEST_ALIGNMENT=64
+          -D__BIGGEST_ALIGNMENT__=64
 
 
 # Note:
@@ -25,8 +25,11 @@ FCFLAGS = -fopenmp $(REPORT) $(DEBUG) \
 .SUFFIXES: .c .f90 .o .mod
 .PHONEY:   clean
 
-#%:: %.f90
-#	$(FC) -o $@ $(FCFLAGS) $<
+%:: %.f90
+	$(FC) -o $@ $(FCFLAGS) $<
+
+%:: %.F90
+	$(FC) -fpp -o $@ $(FCFLAGS) $<
 
 %.o: %.f90
 	$(FC) $(FCFLAGS) -c -o $@ $<
