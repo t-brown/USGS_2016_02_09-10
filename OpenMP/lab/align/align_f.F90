@@ -7,9 +7,9 @@ program align
         double precision, allocatable :: a(:)
         double precision, allocatable :: b(:)
         double precision, allocatable :: c(:)
-        !dir$ attributes align: 64:: a
-        !dir$ attributes align: 64:: b
-        !dir$ attributes align: 64:: c
+        !dir$ attributes align: __BIGGEST_ALIGNMENT__:: a
+        !dir$ attributes align: __BIGGEST_ALIGNMENT__:: b
+        !dir$ attributes align: __BIGGEST_ALIGNMENT__:: c
 
         ierr = 0
         allocate(a(n), stat=ierr)
@@ -58,9 +58,9 @@ subroutine plus(a, b, c)
         integer                         :: i
         integer                         :: n
 
-        !dir$ assume_aligned a: 64
-        !dir$ assume_aligned b: 64
-        !dir$ assume_aligned c: 64
+        !dir$ assume_aligned a: __BIGGEST_ALIGNMENT__
+        !dir$ assume_aligned b: __BIGGEST_ALIGNMENT__
+        !dir$ assume_aligned c: __BIGGEST_ALIGNMENT__
 
         n = ubound(a, 1)
 
