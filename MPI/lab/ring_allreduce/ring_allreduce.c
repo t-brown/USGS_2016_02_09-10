@@ -22,7 +22,11 @@
 #include <err.h>
 #include <mpi.h>
 
-#define ALIGNMENT 64
+#ifdef __BIGGEST_ALIGNMENT__
+#  define ALIGNMENT __BIGGEST_ALIGNMENT__
+#else
+#  define ALIGNMENT 64
+#endif
 
 int
 main(int argc, char **argv)
