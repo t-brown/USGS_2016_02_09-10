@@ -20,8 +20,8 @@ module jacobi
 
         use kinds,    only : r_dp
         use err,      only : err_msg
-        use hdf_rw,   only : hcreate, hwdata, hclose
-        use hdf5,     only : hid_t
+!        use hdf_rw,   only : hcreate, hwdata, hclose
+!        use hdf5,     only : hid_t
         use walltime, only : get_walltime
 
         implicit none
@@ -46,9 +46,9 @@ subroutine jacobi_solver(phi, niter, ierr, filename)
         real(kind=r_dp), allocatable :: tmp(:,:,:)
         !real(kind=r_dp), pointer     :: grid(:,:,:) => null()
 
-        integer(kind=hid_t) :: f_id                     ! file identifier
-        character(len=256)  :: outfile                  ! output file name
-        character(len=256)  :: gname                    ! iteration group
+        !integer(kind=hid_t) :: f_id                     ! file identifier
+        !character(len=256)  :: outfile                  ! output file name
+        !character(len=256)  :: gname                    ! iteration group
 
         ierr = 0
         imax = size(phi, 1)
@@ -61,15 +61,15 @@ subroutine jacobi_solver(phi, niter, ierr, filename)
         end if
 
         ! Write the array
-        if (present(filename)) then
-                outfile = trim(filename)
-        else
-                outfile = 'js.h5'
-        end if
-        call hcreate(outfile, f_id, ierr)
-        it = 0
-        write(gname, '(I8)') it
-        call hwdata(f_id, phi, gname, ierr)
+!        if (present(filename)) then
+!                outfile = trim(filename)
+!        else
+!                outfile = 'js.h5'
+!        end if
+!        call hcreate(outfile, f_id, ierr)
+!        it = 0
+!        write(gname, '(I8)') it
+!        call hwdata(f_id, phi, gname, ierr)
 
 
         call get_walltime(s)
@@ -86,15 +86,15 @@ subroutine jacobi_solver(phi, niter, ierr, filename)
                 end do
             end do
             phi = tmp
-            write(gname, '(I8)') it
-            call hwdata(f_id, phi, gname, ierr)
+!            write(gname, '(I8)') it
+!            call hwdata(f_id, phi, gname, ierr)
         end do
 
         call get_walltime(e)
 
         print *, 'Time elapsed: ', e - s
 
-        call hclose(f_id, ierr)
+!        call hclose(f_id, ierr)
 
         if (allocated(tmp)) then
                 deallocate(tmp)

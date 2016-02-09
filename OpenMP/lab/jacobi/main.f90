@@ -19,7 +19,7 @@
 ! Jacobian Solver
 program js
 
-        use hdf_rw, only : hinit
+!        use hdf_rw, only : hinit
         use kinds,  only : r_dp
         use err,    only : err_abort
         use args,   only : args_parse
@@ -54,10 +54,10 @@ program js
         end if
 
         ! Initalize the HDF5 routines
-        call hinit(ierr)
-        if (ierr /= 0) then
-                call err_abort('Unable to initialize HDF5', ierr)
-        end if
+!        call hinit(ierr)
+!        if (ierr /= 0) then
+!                call err_abort('Unable to initialize HDF5', ierr)
+!        end if
 
         ! Solve the Jacobi
         if (filename /= '') then
