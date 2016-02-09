@@ -18,11 +18,11 @@
 
 module jacobi
 
-        use kinds,  only : r_dp
-        use err,    only : err_msg
-        use hdf_rw, only : hcreate, hwdata, hclose
-        use hdf5,   only : hid_t
-
+        use kinds,    only : r_dp
+        use err,      only : err_msg
+        use hdf_rw,   only : hcreate, hwdata, hclose
+        use hdf5,     only : hid_t
+        use walltime, only : get_walltime
 
         implicit none
 
@@ -41,9 +41,10 @@ subroutine jacobi_solver(phi, niter, ierr, filename)
 
         integer                      :: it, k, j, i     ! loop indexers
         integer                      :: imax, jmax, kmax
-        real(kind=r_dp), parameter   :: one_sixth = 1.0d0 / 6.0d0
+        real(kind=r_dp), parameter   :: one_sixth = 1.0_r_dp / 6.0_r_dp
+        real(kind=r_dp)              :: s, e
         real(kind=r_dp), allocatable :: tmp(:,:,:)
-        real(kind=r_dp), pointer     :: grid(:,:,:) => null()
+        !real(kind=r_dp), pointer     :: grid(:,:,:) => null()
 
         integer(kind=hid_t) :: f_id                     ! file identifier
         character(len=256)  :: outfile                  ! output file name
@@ -71,6 +72,8 @@ subroutine jacobi_solver(phi, niter, ierr, filename)
         call hwdata(f_id, phi, gname, ierr)
 
 
+        call get_walltime(s)
+
         do it = 1, niter
             do k = 2, kmax-1
                 do j = 2, jmax-1
@@ -86,6 +89,10 @@ subroutine jacobi_solver(phi, niter, ierr, filename)
             write(gname, '(I8)') it
             call hwdata(f_id, phi, gname, ierr)
         end do
+
+        call get_walltime(e)
+
+        print *, 'Time elapsed: ', e - s
 
         call hclose(f_id, ierr)
 

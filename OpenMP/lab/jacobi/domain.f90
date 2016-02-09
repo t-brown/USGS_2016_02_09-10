@@ -92,7 +92,7 @@ subroutine domain_init(grid, imax, jmax, kmax, ierr, &
                 call err_msg('Unable to allocate new grid')
                 return
         end if
-        grid = 0.0d0
+        grid = 0.0_r_dp
 
         call domain_bc(grid, ierr, north, south, east, west, top, bottom)
         if (ierr /= 0) then
@@ -134,34 +134,34 @@ subroutine domain_bc(grid, ierr, north, south, east, west, top, bottom)
         if (present(west)) then
                 r_west = west
         else
-                r_west = 0.0d0
+                r_west = 0.0_r_dp
         end if
 
         if (present(east)) then
                 r_east = east
         else
-                r_east = 0.0d0
+                r_east = 0.0_r_dp
         end if
 
         if (present(south)) then
                 r_south = south
         else
-                r_south = 0.0d0
+                r_south = 0.0_r_dp
         end if
         if (present(north)) then
                 r_north = north
         else
-                r_north = 0.0d0
+                r_north = 0.0_r_dp
         end if
         if (present(bottom)) then
                 r_bottom = bottom
         else
-                r_bottom = 0.0d0
+                r_bottom = 0.0_r_dp
         end if
         if (present(top)) then
                 r_top = top
         else
-                r_top = 0.0d0
+                r_top = 0.0_r_dp
         end if
 
         ! Faces
