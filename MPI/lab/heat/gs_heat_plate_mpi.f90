@@ -291,6 +291,7 @@ END SUBROUTINE setup_grid
      ! find the max difference value
      CALL MPI_Allreduce(myDeltaT,maxDeltaT,1,MPI_DOUBLE_PRECISION, MPI_MAX, grid_info%commcart, ierr)
      ! When the max difference is less than the convergance the program needs to quit
+     WRITE (*,*) "Change in temperature: ", maxDeltaT
      IF (maxDeltaT < heat_info%convergence) THEN
         quitProg = .TRUE.
      END IF
