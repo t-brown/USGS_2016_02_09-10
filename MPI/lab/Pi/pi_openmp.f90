@@ -45,6 +45,7 @@ PROGRAM main
      x = h * (DBLE(i) - 0.5d0)
      sum = sum + f(x)
   ENDDO
+!OMP END DO
   pi = h * sum
 
 
