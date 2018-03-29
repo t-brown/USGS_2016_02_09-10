@@ -8,8 +8,8 @@ program hdf_pwrite
 
         implicit none
 
-        ! Local array size with halo
-        integer, parameter :: g_N   = 20
+        ! Global array size with halo
+        integer, parameter :: g_N   = 20480
         integer, parameter :: ndims = 2
         integer, parameter :: halo  = 1
 
@@ -47,6 +47,13 @@ program hdf_pwrite
 
         ! Local data array
         real(kind=r_dp), allocatable :: grid(:,:)
+        ! Timers
+        real(kind=r_dp) :: start
+        real(kind=r_dp) :: elapsed
+        real(kind=r_dp) :: maxtime
+        real(kind=r_dp) :: mintime
+        real(kind=r_dp) :: avgtime
+
 
         argc = 0
         ierr = 0
@@ -73,14 +80,23 @@ program hdf_pwrite
 
                 ! get the filename
                 argc = command_argument_count()
-                if (argc .lt. 1 ) then
-                        write(0, *) 'Must supply a filename'
+                if (argc .lt. 3 ) then
+                        write(0, *) 'usage: hdf_pwrite stripe count filename'
                         call exit(1)
                 endif
-                call get_command_argument(1, filename)
+                call get_command_argument(1, clcount)
+                call get_command_argument(2, clsize)
+                call get_command_argument(3, filename)
+                write(0, *) 'Creating file: ', trim(filename),     &
+                            ' with stripe count: ', trim(clcount), &
+                            ' and stripe size: ', trim(clsize)
         endif
 
-        ! Broadcast the filename
+        ! Broadcast the arguments
+        call mpi_bcast(clcount, len(clcount), MPI_CHAR, 0, &
+                       MPI_COMM_WORLD, ierr)
+        call mpi_bcast(clsize, len(clsize), MPI_CHAR, 0, &
+                       MPI_COMM_WORLD, ierr)
         call mpi_bcast(filename, len(filename), MPI_CHAR, 0, &
                        MPI_COMM_WORLD, ierr)
 
@@ -88,18 +104,28 @@ program hdf_pwrite
         call h5open_f(ierr)
 
         ! Set a stripe count of 4 and a stripe size of 4MB
-        lcount = 4
-        lsize  = 4 * 1024 * 1024
-        write(clcount, '(I4)') lcount
-        write(clsize, '(I8)') lsize
+!        lcount = 4
+!        lsize  = 4 * 1024 * 1024
+!        write(clcount, '(I4)') lcount
+!        write(clsize, '(I8)') lsize
 
         call mpi_info_create(info, ierr)
         call mpi_info_set(info, "striping_factor", trim(clcount), ierr)
+        if (ierr /= 0) then
+            write(0,*) 'Unable to set striping factor of: ', trim(clcount), ' on ', id
+        endif
         call mpi_info_set(info, "striping_unit", trim(clsize), ierr)
+        if (ierr /= 0) then
+            write(0,*) 'Unable to set strip size of: ', trim(clsize), ' on ', id
+        endif
 
         ! Set up the access properties
         call h5pcreate_f(H5P_FILE_ACCESS_F, p_id, ierr)
         call h5pset_fapl_mpio_f(p_id, MPI_COMM_2D, info, ierr)
+
+        if (id .eq. 0) then
+            write(0,*) 'Opening file: ', trim(filename)
+        endif
 
         ! Open the file
         call h5fcreate_f(filename, H5F_ACC_TRUNC_F, f_id, ierr, &
@@ -122,6 +148,9 @@ program hdf_pwrite
                 write(0,*) 'Unable to allocate local data array: ', ierr
                 call mpi_abort(MPI_COMM_WORLD, 1, ierr)
         end if
+        if (id .eq. 0) then
+            write(0,*) 'Allocated local data.'
+        endif
 
         grid = -99.99
         ! Init the local data
@@ -150,6 +179,9 @@ program hdf_pwrite
         do i = 1, ndims
                 g_start(i) = n(i) * coords(i)
         enddo
+        if (id .eq. 0) then
+            write(0,*) 'Created global hyperslab'
+        endif
 
         call h5screate_simple_f(ndims, g_size, filespace, ierr)
         call h5sselect_hyperslab_f(filespace, H5S_SELECT_SET_F, &
@@ -157,21 +189,37 @@ program hdf_pwrite
                                    stride, block)
 
         ! Create a data chunking property
-        c_size = 2
+        c_size = 256
         call h5pcreate_f(H5P_DATASET_CREATE_F, c_id, ierr)
         call h5pset_chunk_f(c_id, ndims, c_size, ierr)
         ! Create the dataset id
         call h5dcreate_f(f_id, "/data", H5T_IEEE_F64LE, filespace, d_id, &
                          ierr, dcpl_id=c_id)
+!        call h5dcreate_f(f_id, "/data", H5T_IEEE_F64LE, filespace, d_id, &
+!                         ierr, dcpl_id=H5P_DEFAULT_F)
 
 
         ! Create a data transfer property
         call h5pcreate_f(H5P_DATASET_XFER_F, x_id, ierr)
         call h5pset_dxpl_mpio_f(x_id, H5FD_MPIO_COLLECTIVE_F, ierr)
+
         ! Write the data
+        if (id .eq. 0) then
+            write(0,*) 'About to write the data set'
+        endif
+        call MPI_Barrier(MPI_COMM_WORLD, ierr);
+        start = MPI_Wtime()
         call h5dwrite_f(d_id, H5T_IEEE_F64LE, grid, s_size, ierr,      &
                         file_space_id=filespace, mem_space_id=memspace, &
                         xfer_prp=x_id)
+        elapsed = MPI_Wtime() - start
+        call MPI_Reduce(elapsed, mintime, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD, ierr);
+        call MPI_Reduce(elapsed, maxtime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD, ierr);
+        call MPI_Reduce(elapsed, avgtime, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD, ierr);
+        if (id .eq. 0) then
+            avgtime = avgtime / np;
+            write(0, *) 'Min: ', mintime, ' Avg: ', avgtime, ' Max: ', maxtime
+        endif
 
         if (allocated(grid)) then
                 deallocate(grid)
